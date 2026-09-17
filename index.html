@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mini VirusTotal - File Scanner</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+    color: #333;
+  }
+
+  .container {
+    background: #ffffffdd; /* white with slight transparency */
+    width: 480px;
+    max-width: 90vw;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 16px 32px rgba(0,0,0,0.15);
+    text-align: center;
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  h1 {
+    margin-bottom: 24px;
+    font-weight: 700;
+    font-size: 2.2rem;
+    color: #1a1a1a;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+  }
+
+  form {
+    margin-bottom: 20px;
+  }
+
+  input[type="file"] {
+    display: block;
+    margin: 0 auto 24px auto;
+    cursor: pointer;
+    font-size: 1rem;
+    border: 2px dashed #3498db;
+    padding: 20px;
+    border-radius: 12px;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    background-color: #f0f8ff;
+  }
+
+  input[type="file"]:hover {
+    border-color: #2980b9;
+    background-color: #e1f0ff;
+  }
+
+  button {
+    background: #3498db;
+    color: white;
+    border: none;
+    font-size: 1.1rem;
+    padding: 14px 30px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    font-weight: 600;
+    box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4);
+    margin: 5px;
+  }
+
+  button:hover {
+    background: #2980b9;
+    box-shadow: 0 8px 18px rgba(41, 128, 185, 0.6);
+  }
+
+  .history-btn {
+    background: #27ae60;
+  }
+  .history-btn:hover {
+    background: #1e8449;
+  }
+  .back-btn {
+    background: #2980b9;
+  }
+
+  #result {
+    text-align: left;
+    background: #ecf0f1;
+    border-radius: 12px;
+    padding: 20px;
+    font-family: 'Courier New', Courier, monospace;
+    color: #2c3e50;
+    min-height: 80px;
+    white-space: pre-wrap;
+    box-shadow: inset 0 0 12px #bdc3c7;
+    margin-top: 10px;
+  }
+
+  @media (max-width: 520px) {
+    .container {
+      width: 100%;
+      padding: 30px 20px;
+    }
+    input[type="file"] {
+      padding: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Webshell Detection</h1>
+
+  <form id="scanForm">
+    <input type="file" id="fileInput" required />
+    <button type="submit">Scan File</button>
+    <button type="button" class="history-btn" onclick="window.location.href='/history'">View History</button>
+  </form>
+
+  <div id="result">Upload a file to scan for malware.</div>
+</div>
+
+<script>
+  const form = document.getElementById('scanForm');
+  const resultDiv = document.getElementById('result');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    resultDiv.textContent = "Uploading and scanning file... please wait.";
+
+    const fileInput = document.getElementById('fileInput');
+    if (!fileInput.files.length) {
+      resultDiv.textContent = "Please select a file first.";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    try {
+      const response = await fetch("/scan", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data.error) {
+        resultDiv.textContent = "Error: " + data.error;
+      } else {
+        let output = "";
+        if (data.malicious !== undefined) {
+          output += `Malicious: ${data.malicious}\n`;
+          output += `Harmless: ${data.harmless}\n`;
+          output += `Suspicious: ${data.suspicious}\n`;
+          output += `Undetected: ${data.undetected}\n`;
+          output += `Type: ${data.virus_type || "N/A"}\n\n`;
+        }
+        output += `Message: ${data.message}`;
+        resultDiv.textContent = output;
+      }
+    } catch (err) {
+      resultDiv.textContent = "Error: " + err.message;
+    }
+  });
+</script>
+</body>
+</html>

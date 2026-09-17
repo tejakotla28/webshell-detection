@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard - Mini VirusTotal</title>
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --malicious-color: #e74c3c;
+      --suspicious-color: #f39c12;
+      --harmless-color: #2ecc71;
+      --background-color: #f2f2f2;
+      --card-background: #ffffff;
+      --text-color: #333333;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--background-color);
+      margin: 0;
+      padding: 0;
+      color: var(--text-color);
+    }
+
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--primary-color);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      font-size: 1.2rem;
+    }
+
+    .navbar-brand {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .navbar-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .navbar-links a {
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      padding: 0.3rem 0;
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .navbar-links a:hover,
+    .navbar-links a[aria-current="page"] {
+      color: #d1e7ff;
+      border-bottom: 2px solid #d1e7ff;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .cards {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: var(--card-background);
+      padding: 20px;
+      border-radius: 8px;
+      flex: 1;
+      min-width: 200px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card h4 {
+      margin-bottom: 10px;
+      font-size: 1.2em;
+      color: var(--primary-color);
+    }
+
+    .card p {
+      font-size: 2em;
+      margin: 0;
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #f9f9f9;
+      font-weight: bold;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .status-malicious {
+      color: var(--malicious-color);
+      font-weight: bold;
+    }
+
+    .status-suspicious {
+      color: var(--suspicious-color);
+      font-weight: bold;
+    }
+
+    .status-harmless {
+      color: var(--harmless-color);
+      font-weight: bold;
+    }
+
+    .actions {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .actions button {
+      padding: 12px 24px;
+      margin: 10px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background-color 0.3s ease;
+    }
+
+    .actions button:hover {
+      background: #2980b9;
+    }
+
+    @media (max-width: 768px) {
+      .cards {
+        flex-direction: column;
+      }
+    }
+
+    .card table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+  <div class="navbar-brand">
+    <strong>Webshell Detection</strong>
+  </div>
+  <div class="navbar-links">
+    <a href="{{ url_for('home') }}" {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a>
+    <a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>Scan</a>
+    <a href="{{ url_for('history') }}" {% if request.endpoint == 'history' %}aria-current="page"{% endif %}>History</a>
+    <a href="{{ url_for('logout') }}">Logout</a>
+
+
+   {% if session.get('user') %}
+  <a href="{{ url_for('logout') }}">Logout</a>
+{% endif %}
+
+  </div>
+</div>
+
+  <div class="container">
+    <div class="cards">
+      <div class="card">
+        <h4>Total Scans</h4>
+        <p>{{ total_scans }}</p>
+      </div>
+      <div class="card">
+        <h4>Malicious</h4>
+        <p>{{ malicious_count }}</p>
+      </div>
+      <div class="card">
+        <h4>Harmless</h4>
+        <p>{{ harmless_count }}</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px; width: 100%;">
+      <h4 style="text-align: left; margin-bottom: 20px; font-weight: 700; font-size: 1rem; color: #2c3e50;">Recent Scans</h4>
+      <table>
+        <tr>
+          <th>File Name</th>
+          <th>Result</th>
+          <th>Date</th>
+        </tr>
+        {% if recent_scans %}
+          {% for entry in recent_scans %}
+          <tr>
+            <td>{{ entry.filename }}</td>
+            <td class="{% if entry.result.get('malicious', 0) > 0 %}status-malicious
+                        {% elif entry.result.get('suspicious', 0) > 0 %}status-suspicious
+                        {% else %}status-harmless{% endif %}">
+              {% if entry.result.get('malicious', 0) > 0 %}Malicious
+              {% elif entry.result.get('suspicious', 0) > 0 %}Suspicious
+              {% else %}Harmless{% endif %}
+            </td>
+          <td>{{ entry.timestamp[:10] if entry.timestamp is defined else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="3">No recent scans.</td></tr>
+        {% endif %}
+      </table>
+    </div>
+
+    <div class="actions">
+      <button id="btn-scan">Scan New File</button>
+      <button id="btn-history">View Full History</button>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('btn-scan').onclick = function() {
+      window.location.href = "{{ url_for('index') }}";
+    }
+    document.getElementById('btn-history').onclick = function() {
+      window.location.href = "{{ url_for('history') }}";
+    }
+  </script>
+
+</body>
+</html>

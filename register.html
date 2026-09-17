@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register - Mini VirusTotal</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f2f2f2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .auth-container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 {
+      text-align: center;
+      color: #3498db;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #3498db;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .link {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .error {
+      color: red;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <h2>Create Account</h2>
+    <form id="registerForm" method="POST">
+      <label for="username">Username</label>
+      <input type="text" name="username" required minlength="3" />
+
+      <label for="email">Email</label>
+      <input type="email" name="email" required />
+
+      <label for="password">Password</label>
+      <input type="password" name="password" required />
+    <label for="confirm_password">Confirm Password</label>
+    <input type="password" name="confirm_password" required />
+
+
+      <div id="error" class="error"></div>
+
+      <button type="submit">Register</button>
+      <div class="link">
+        Already have an account? <a href="{{ url_for('login') }}">Login</a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').onsubmit = function(e) {
+      const pwd = document.querySelector('input[name="password"]').value;
+      const confirm = document.querySelector('input[name="confirm"]').value;
+      const error = document.getElementById('error');
+
+      const regex = {
+        length: /.{8,}/,
+        lowercase: /[a-z]/,
+        uppercase: /[A-Z]/,
+        digit: /\d/,
+        special: /[!@#$%^&*(),.?":{}|<>]/,
+      };
+
+      if (pwd !== confirm) {
+        e.preventDefault();
+        error.textContent = "Passwords do not match.";
+        return;
+      }
+
+      if (!regex.length.test(pwd)) {
+        e.preventDefault();
+        error.textContent = "Password must be at least 8 characters long.";
+        return;
+      }
+
+      if (!regex.lowercase.test(pwd)) {
+        e.preventDefault();
+        error.textContent = "Password must contain at least one lowercase letter.";
+        return;
+      }
+
+      if (!regex.uppercase.test(pwd)) {
+        e.preventDefault();
+        error.textContent = "Password must contain at least one uppercase letter.";
+        return;
+      }
+
+      if (!regex.digit.test(pwd)) {
+        e.preventDefault();
+        error.textContent = "Password must contain at least one digit.";
+        return;
+      }
+
+      if (!regex.special.test(pwd)) {
+        e.preventDefault();
+        error.textContent = "Password must contain at least one special character.";
+        return;
+      }
+
+      // Passed all checks
+      error.textContent = "";
+    };
+  </script>
+</body>
+</html>
